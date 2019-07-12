@@ -1,13 +1,15 @@
-from WeDo import Smarthub, Motor
+from WeDo import *
 import time
 
-myhub = Smarthub('24:71:89:17:9D:AE')
+hub = Smarthub('24:71:89:17:9D:AE')
+hub.connect()
 
-myhub.connect()
+hub.attach_port(2, Motor)
 
-mot1 = Motor(2, myhub)
+hub.get_port(2).set_speed(0.1)
 
-	
-for i in range(9):
-	mot1.set_speed((float(i)-4)/4)
-	time.sleep(1)
+time.sleep(5)
+
+hub.get_port(2).set_speed(0)
+
+hub.disconnect()
