@@ -13,21 +13,34 @@ INPUT_COMMAND_UUID = '00001563-1212-efde-1523-785feabcd123'
 print('Connecting to the WeDo 2.0')
 
 def callback (sender, data):
+	
 	int_values = [x for x in data]
+	y = int_values[-1]
+	x= int_values[-2]
+	print(f"{sender}: {int_values} / {data} : {y} : {x}")
+	print(str(convertToNumber(x,y)))
 
-	print(f"{sender}: {int_values} / {data}")
+def convertToNumber(x, y):
+	if x == 0 and y == 0:
+		return 0
+	if x == 0 and y == 195:
+		return 128
+	
+	offset = (4**(y%128 - 63))/(2 if x < 128 else 1) * (1 + (x%128/128))
+	number = offset if y < 128 else 256-offset
+	return int(number)
 
 async def run(address, loop):
 	async with BleakClient(address, loop=loop) as client:
 		print ('Connected successfully!')
 
-		await client.write_gatt_char(INPUT_COMMAND_UUID, bytearray([0x01,0x02,PORT_NUM,0x23,0x00,0x01,0x00,0x00,0x00,0x02,0x01]) )
+		await client.write_gatt_char(INPUT_COMMAND_UUID, bytearray([0x01,0x02,PORT_NUM,0x23,0x00,0x01,0x00,0x00,0x00,0x02,0x01]), True)
 
 		await client.start_notify(SENSOR_VAL_UUID, callback)
 
 		try:
 			while True:	
-				await asyncio.sleep(5.0, loop=loop)
+				await asyncio.sleep(1.0, loop=loop)
 		except KeyboardInterrupt:
 			print('Stopping notifications...')
 			await client.stop_notify(SENSOR_VAL_UUID)
