@@ -1,7 +1,6 @@
 import asyncio
 from bleak import BleakClient
 import time
-import janus
 
 address = "24:71:89:17:9D:AE"
 
@@ -50,12 +49,13 @@ async def run(address, loop):
 
 		await client.start_notify(SENSOR_VAL_UUID, callback)
 
-		global outputted_value
+		# global outputted_value
 		
 		try:
 			while True:	
-				# asyncio.sleep(1)
-				await client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x06,0x04,0x01,outputted_value]), True)
+				asyncio.sleep(1)
+				# await client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x06,0x04,0x01,outputted_value]), True)
+				# print(await client.read_gatt_char(PORT_INFO_UUID))
 				# await client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x02, 0x01, 0x01, translate_speed(outputted_value/10)]))
 
 		except KeyboardInterrupt:
