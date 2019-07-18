@@ -17,6 +17,7 @@ print('Connecting to the WeDo 2.0')
 
 def callback (sender, data):
 	int_values = [x for x in data]
+	print('notifitied!')
 	y = int_values[-1]
 	x= int_values[-2]
 	print(f"{sender}: {int_values} / {data} : {y} : {x}")
@@ -54,7 +55,7 @@ async def run(address, loop):
 		try:
 			while True:	
 				asyncio.sleep(1)
-				# await client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x06,0x04,0x01,outputted_value]), True)
+				await client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x06,0x04,0x01,outputted_value]), True)
 				# print(await client.read_gatt_char(PORT_INFO_UUID))
 				# await client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x02, 0x01, 0x01, translate_speed(outputted_value/10)]))
 
