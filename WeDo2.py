@@ -9,6 +9,10 @@ OUTPUT_COMMAND_UUID = '00001565-1212-efde-1523-785feabcd123'
 LED_ABSOLUTE_MODE = 0
 LED_DISCREET_MODE = 1
 
+# LED index colors
+LED_INDEX_PINK = 0x01
+LED_INDEX_PURPLE = 0x02
+
 loop = asyncio.get_event_loop()
 
 class HubManager():
@@ -30,7 +34,9 @@ class HubManager():
 
 			if mac_addr.startswith('24:71:89:') or 'LPF2 Smart Hub' in name:
 				print(d)
-				self.wedos.append( Smarthub( BleakClient(mac_addr, loop=loop) ) )
+				client = BleakClient(mac_addr, loop=loop)
+				await client.connect()
+				self.wedos.append( Smarthub( client ) )
 
 class Smarthub ():
 	def __init__(self, client):
@@ -39,9 +45,7 @@ class Smarthub ():
 	def set_led_mode (self, mode):
 
 		async def _():
-			async with self.client as c:
-				# print('eee')
-				await c.write_gatt_char(INPUT_COMMAND_UUID, bytearray([0x01,0x02,0x06,0x17,mode,0x01,0x00,0x00,0x00,0x02,0x01]), True)
+			await self.client.write_gatt_char(INPUT_COMMAND_UUID, bytearray([0x01,0x02,0x06,0x17,mode,0x01,0x00,0x00,0x00,0x02,0x01]), True)
 
 		loop.run_until_complete(_())
 
@@ -52,17 +56,13 @@ class Smarthub ():
 
 		if len(args) == 1:
 			async def _():
-				async with self.client as c:
-					# print('eee')
-					await client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x06,0x04,0x03,outputted_value[0], outputted_value[1], outputted_value[2]]), True)
+				await self.client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x06,0x04,0x01, args[0] ]), True)
 					
 		elif len(args) == 3:
 			r,g,b = args
 
 			async def _():
-				async with self.client as c:
-					# print('eee')
-					await client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray( [0x06,0x04,0x03,r,g,b] ), True)
+				await self.client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray( [0x06,0x04,0x03,r,g,b] ), True)
 
 		else:
 			raise Exception('Incorrect arguments, either pass 1 (index) number or 3 (rgb)')
