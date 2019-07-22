@@ -19,9 +19,15 @@ def callback (sender, data):
 	int_values = [x for x in data]
 	y = int_values[-1]
 	x= int_values[-2]
-	print(f"{data} : {convertToNumber(x,y)}")
-	global outputted_value
-	outputted_value = unpackRGB(convertToNumber(x,y))
+
+	num = convertToNumber(x,y)
+
+
+	# hacky
+	if num >= 10:
+		global outputted_value
+		outputted_value = unpackRGB(num)
+		print(f"{data} : {num} : {outputted_value}")
 
 def convertToNumber(x, y):
 	if x == 0 and y == 0:
@@ -34,9 +40,9 @@ def convertToNumber(x, y):
 	return int(number)
 
 def unpackRGB(val):
-	R = int((val & 0xE0) >> 5)
-	G = int((val & 0x1C) >> 2)
-	B = int(val & 0x03)
+	R = ((val & 0xE0) >> 5) * 32
+	G = ((val & 0x1C) >> 2) * 32
+	B = (val & 0x03) * 64
 
 	# print(val, (R, G, B))
 
@@ -58,7 +64,8 @@ async def run(address, loop):
 		try:
 			while True:	
 				# print(await client.read_gatt_char(PORT_INFO_UUID))
-				asyncio.sleep(1)
+				await asyncio.sleep(1)
+				# print(outputted_value)
 				await client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x06,0x04,0x03,outputted_value[0], outputted_value[1], outputted_value[2]]), True)
 
 		except KeyboardInterrupt:

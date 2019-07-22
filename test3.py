@@ -2,7 +2,8 @@ import asyncio
 from bleak import BleakClient
 import time
 
-address = "24:71:89:17:9D:AE"
+address1 = "24:71:89:17:9D:AE"
+address2 = "24:71:89:09:CB:21"
 
 PORT_NUM = 0x01
 
@@ -12,17 +13,29 @@ INPUT_COMMAND_UUID = '00001563-1212-efde-1523-785feabcd123'
 OUTPUT_COMMAND_UUID = '00001565-1212-efde-1523-785feabcd123'
 
 outputted_value = 1;
+is_queueing = False;
 
-print('Connecting to the WeDo 2.0')
+queue = []
+queue_num = 0;
+
+queue_final = []
+
+print('Connecting to two WeDo 2.0\'s...')
 
 def callback (sender, data):
 	int_values = [x for x in data]
-	print('notifitied!')
+	print('notified!')
 	y = int_values[-1]
 	x= int_values[-2]
-	print(f"{sender}: {int_values} / {data} : {y} : {x}")
+	
 	global outputted_value
+	
 	outputted_value = convertToNumber(x,y)
+	
+
+	print(f"{sender}: {int_values} / {outputted_value}")
+
+
 
 def convertToNumber(x, y):
 	if x == 0 and y == 0:
@@ -42,26 +55,41 @@ def translate_speed(speed):
     else:
         return 0x00
 
-async def run(address, loop):
-	async with BleakClient(address, loop=loop) as client:
-		print ('Connected successfully!')
+async def run(addr1, add2, loop):
+	async with BleakClient(addr1, loop=loop) as client:
+		print('Connected to the first WeDo successfully!')
 
-		await client.write_gatt_char(INPUT_COMMAND_UUID, bytearray([0x01,0x02,PORT_NUM,0x23,0x00,0x01,0x00,0x00,0x00,0x02,0x01]), True)
+		async with BleakClient(add2, loop=loop) as client2:
+			print ('Connected to the second WeDo successfully!')
 
-		await client.start_notify(SENSOR_VAL_UUID, callback)
+			await client.write_gatt_char(INPUT_COMMAND_UUID, bytearray([0x01,0x02,PORT_NUM,0x23,0x00,0x01,0x00,0x00,0x00,0x02,0x01]), True)
 
-		# global outputted_value
-		
-		try:
-			while True:	
-				asyncio.sleep(1)
-				await client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x06,0x04,0x01,outputted_value]), True)
-				# print(await client.read_gatt_char(PORT_INFO_UUID))
-				# await client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x02, 0x01, 0x01, translate_speed(outputted_value/10)]))
+			await client.start_notify(SENSOR_VAL_UUID, callback)
 
-		except KeyboardInterrupt:
-			print('Stopping notifications...')
+			await client2.write_gatt_char(INPUT_COMMAND_UUID, bytearray([0x01,0x02,PORT_NUM,0x23,0x00,0x01,0x00,0x00,0x00,0x02,0x01]), True)
+
+			await client2.start_notify(SENSOR_VAL_UUID, callback)
+
+			global outputted_value
+			
+			try:
+				while True:	
+					await asyncio.sleep(1)
+					# print(queue_final)
+
+					copy = outputted_value
+
+					await client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x06,0x04,0x01,copy]), True)
+					await client2.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x06,0x04,0x01,copy]), True)
+
+					# await client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x06,0x04,0x01,outputted_value]), True)
+					# print(await client.read_gatt_char(PORT_INFO_UUID))
+					# await client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x02, 0x01, 0x01, translate_speed(outputted_value/10)]))
+
+			except KeyboardInterrupt:
+				print('Stopping notifications...')
 			await client.stop_notify(SENSOR_VAL_UUID)
+			await client2.stop_notify(SENSOR_VAL_UUID)
 
 loop = asyncio.get_event_loop()
-loop.run_until_complete(run(address, loop))
+loop.run_until_complete(run(address1, address2, loop))
