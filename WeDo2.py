@@ -15,6 +15,8 @@ LED_INDEX_PURPLE = 0x02
 
 loop = asyncio.get_event_loop()
 
+GLOBAL_Q = []
+
 class HubManager():
 	"""docstring for HubManager"""
 	def __init__(self, wnum):
@@ -26,7 +28,6 @@ class HubManager():
 
 	async def get_wedo(self):
 		devices = await discover()
-		print('ddd')
 		for d in devices:
 			mac_addr = str(d).split(' ',1)[0][:-1]
 			name = str(d).split(' ',1)[1]
@@ -68,3 +69,22 @@ class Smarthub ():
 			raise Exception('Incorrect arguments, either pass 1 (index) number or 3 (rgb)')
 
 		loop.run_until_complete(_())
+
+
+def process_q ():
+	global GLOBAL_Q
+	for q in GLOBAL_Q:
+		try:
+			# Write
+			hub, uuid, data = q
+
+			async def _():
+				await hub.client.write_gatt_char(uuid, data, True)
+
+			loop.run_until_complete(_())
+		except ValueError:
+			# Read
+			hub, uuid = q
+			hub.client.read_gatt_char(uuid)
+
+	GLOBAL_Q = []
