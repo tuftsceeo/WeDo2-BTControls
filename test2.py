@@ -5,26 +5,17 @@ adapter = GATTToolBackend()
 
 adapter.start()
 
-device = adapter.connect('24:71:89:17:9D:AE')
+device = adapter.connect('24:71:89:09:CB:21')
 
-help(device)
 
 PORT_NUM = 0x01
 
 # print(device.char_read_handle(32))
 
-device.char_write_handle(0x3a, bytearray([0x01,0x02,PORT_NUM,0x23,0x00,0x01,0x00,0x00,0x00,0x02,0x01]))
+device.char_write_handle(0x3d, bytearray([2, 1, 1, 0x64]))
+# device.char_write_handle(0x3d, bytearray([2, 1, 1, 0x9C]))
 
-def thing(e):
-	print(e)
+time.sleep(0.5)
 
-# device.receive_notification(32, thing)
-
-while True:
-	print('attempt')
-	try:
-		data = device.char_read_handle(32)
-		print(data)
-	except Exception as e:
-		time.sleep(0.2)
-		continue
+device.char_write_handle(0x3d, bytearray([1, 1, 1, 0]))
+device.char_write_handle(0x3d, bytearray([2, 1, 1, 0]))
