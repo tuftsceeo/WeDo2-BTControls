@@ -33,9 +33,9 @@ class Attachment (abc.ABC):
 
 
 class Motor(Attachment):
-    def __init__(self, port, master):
+    def __init__(self, port, master, factor):
         Attachment.__init__(self, port, master)
-
+        self.factor = factor
         self.handle = 0x3d
     
     def set_speed(self, speed):
@@ -44,9 +44,9 @@ class Motor(Attachment):
         
     def translate_speed(self, speed):
         if speed < 0:
-            return int((0x54*max(speed,-1))+0xF0)
+            return int((0x54*max(speed,-1)*self.factor)+0xF0)
         elif speed > 0:
-            return int((0x54*min(speed,1))+0x10)
+            return int((0x54*min(speed,1)*self.factor)+0x10)
         else:
             return 0x00
 
