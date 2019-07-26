@@ -1,3 +1,4 @@
+import sys
 import asyncio as aio
 from bleak import BleakClient, discover
 
@@ -17,7 +18,25 @@ LED_INDEX_PURPLE = 0x02
 DIST_DETECT_MODE = 0
 DIST_COUNT_MODE = 1
 
+TILT_ANGLE_MODE = 0
+TILT_TILT_MODE = 1
+TILT_CRASH_MODE = 2
+
+TILT_SENSOR_DIRECTION_NEUTRAL  = 0
+TILT_SENSOR_DIRECTION_BACKWARD = 3
+TILT_SENSOR_DIRECTION_RIGHT    = 5
+TILT_SENSOR_DIRECTION_LEFT     = 7
+TILT_SENSOR_DIRECTION_FORWARD  = 9
+TILT_SENSOR_DIRECTION_UNKNOWN  = 10
+
 loop = aio.get_event_loop()
+
+quit_q = aio.LifoQueue()
+
+async def quit():
+	res = await loop.run_in_executor(None, sys.stdin.readline)
+	if res.strip() == 'q':
+		quit_q.put_nowait('q')
 
 def convertToNumber(x, y):
 	if x == 0 and y == 0:
@@ -33,8 +52,11 @@ class HubManager():
 	def __init__(self, wnum):
 		self.wnum = wnum
 		self.wedos = []
+		self.task = None
 
 	async def connect_all (self, addresses=[]):
+		self.task = aio.create_task(quit())
+
 		print('Connecting...')
 		for i in range(self.wnum):
 			mac = ''
@@ -47,9 +69,13 @@ class HubManager():
 
 			client = BleakClient(mac, loop=loop)
 			await client.connect()
+
+			print(f'Connected to WeDo: {mac}')
+
 			self.wedos.append( Hub(client) )
 
 	async def disconnect_all(self):
+		print('Disconnecting...')
 		for w in self.wedos:
 			await w.disconnect()
 
@@ -66,11 +92,31 @@ class HubManager():
 				print(f"Found {d}")
 				return mac_addr
 
+	async def end(self, block=True):
+		global quit_q
+
+		if block:
+			await quit_q.get()
+			
+			print('Ending...')
+			self.task.cancel()
+
+			await self.disconnect_all()
+		else:
+			try:
+				quit_q.get_nowait()
+				print('Ending...')
+				self.task.cancel()
+
+				await self.disconnect_all()
+			except:
+				return
 
 class Hub():
 	def __init__(self, client):
 		self.client = client
 		self.ports = [None]*2
+		self.callbacks = [None]*2
 
 	async def disconnect(self):
 		await self.client.disconnect()
@@ -92,6 +138,8 @@ class Hub():
 			periph.client = self.client
 			periph.port = port
 			self.ports[port-1] = periph
+
+			return periph
 		else:
 			raise Exception('AHH! You can only attach and Attachment!! >:(')
 
@@ -100,6 +148,7 @@ class Hub():
 		await self.client.write_gatt_char(PORT_NOTIF_UUID, [0x00, 0x41, port, 0x08, 1, 0, 0, 0, 1])
 
 		def sensor_cleaner(sender, data):
+			# print(data)
 
 			int_values = [a for a in data]
 			
@@ -111,9 +160,14 @@ class Hub():
 			x,y = int_values[-2:]
 			num = convertToNumber(x,y)
 
-			print(f'got it: {num}')
+			# print(f'got it: {num}')
+			# print(self.callbacks)
+			try:
+				self.callbacks[s_port-1](self, s_port, num)
+			except TypeError:
+				pass
 
-			cb(self, s_port, num)
+		self.callbacks[port-1] = cb
 
 		await self.client.start_notify(SENSOR_VAL_UUID, sensor_cleaner)
 
@@ -132,14 +186,22 @@ class Sensor(Attachment):
 	async def read_value(self):
 		await self.client.read_gatt_char(SENSOR_VAL_UUID, True)
 
+	async def set_mode(self, mode):
+		pass
+
 class DistanceSensor(Sensor):
 	async def set_mode(self, mode):
 		data = bytearray( [0x01,0x02,self.port,0x23,mode,0x01,0x00,0x00,0x00,0x02,0x01] )
 		await self.client.write_gatt_char(INPUT_COMMAND_UUID, data, True)
 
+class TiltSensor(Sensor):
+	async def set_mode(self, mode):
+		data = bytearray( [0x01,0x02,self.port,0x22,mode,0x01,0x00,0x00,0x00,0x02,0x01] )
+		await self.client.write_gatt_char(INPUT_COMMAND_UUID, data, True)
+
 class Motor(Attachment):
 	async def set_speed(self, speed):
-		data = bytearray([0x01, 0x01, 0x01, self.translate_speed( speed ) ])
+		data = bytearray([self.port, 0x01, 0x01, self.translate_speed( speed ) ])
 
 		await self.client.write_gatt_char(OUTPUT_COMMAND_UUID, data, True )
 
