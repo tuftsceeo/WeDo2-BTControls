@@ -33,11 +33,14 @@ loop = aio.get_event_loop()
 
 quit_q = aio.LifoQueue()
 
+
+""" Listen for a q-ENTER, in which case, put something in the Quit detection Queue """
 async def quit():
 	res = await loop.run_in_executor(None, sys.stdin.readline)
 	if res.strip() == 'q':
 		quit_q.put_nowait('q')
 
+""" Convert bytes sent from WeDo sensors into decimal values """
 def convertToNumber(x, y):
 	if x == 0 and y == 0:
 		return 0
@@ -49,11 +52,13 @@ def convertToNumber(x, y):
 	return int(number)	
 
 class HubManager():
+	""" Holds and connects any specified amount of WeDo hubs """
 	def __init__(self, wnum):
 		self.wnum = wnum
 		self.wedos = []
 		self.task = None
 
+	""" Connect the number of WeDos specified at instantiation, either by discovering them or using provided MAC addresses """
 	async def connect_all (self, addresses=[]):
 		self.task = aio.create_task(quit())
 
@@ -74,12 +79,13 @@ class HubManager():
 
 			self.wedos.append( Hub(client) )
 
+	""" Disconnect all hubs """
 	async def disconnect_all(self):
 		print('Disconnecting...')
 		for w in self.wedos:
 			await w.disconnect()
 
-
+	""" Find a WeDo and return its MAC address """
 	async def find_wedos(self):
 		devices = await discover()
 		
@@ -92,6 +98,7 @@ class HubManager():
 				print(f"Found {d}")
 				return mac_addr
 
+	""" If the quit key was pressed, start the ending/disconnect process """
 	async def end(self, block=True):
 		global quit_q
 
@@ -113,6 +120,7 @@ class HubManager():
 				return
 
 class Hub():
+	""" Represents the WeDo """
 	def __init__(self, client):
 		self.client = client
 		self.ports = [None]*2
@@ -121,7 +129,12 @@ class Hub():
 	async def disconnect(self):
 		await self.client.disconnect()
 
+	""" 
+	Set the LED to one of two modes:
+		LED_ABSOLUTE_MODE - Change color using LEGO's presets
+		LED_DISCREET_MODE - Change color using RGB value
 
+	 """ 
 	async def set_led_mode(self, mode):
 		await client.write_gatt_char(INPUT_COMMAND_UUID, 
 			bytearray([0x01,0x02,0x06,0x17,mode,0x01,0x00,0x00,0x00,0x02,0x01]), True)
@@ -133,6 +146,7 @@ class Hub():
 		except TypeError:
 			await self.client.write_gatt_char(OUTPUT_COMMAND_UUID, bytearray([0x06,0x04,0x01, color ]), True)
 
+	""" Connect an Attachment/peripherial (motors, sensors, etc.) to the Hub """	
 	async def attach(self, port, periph):
 		if isinstance(periph, Attachment):
 			periph.client = self.client
@@ -143,6 +157,7 @@ class Hub():
 		else:
 			raise Exception('AHH! You can only attach and Attachment!! >:(')
 
+	""" Set a callback to for a sensor at some port. Whenever the sensor updates, the callback will be called"""
 	async def set_sensor_callback(self, port, cb):
 		# Set port notifications
 		await self.client.write_gatt_char(PORT_NOTIF_UUID, [0x00, 0x41, port, 0x08, 1, 0, 0, 0, 1])
@@ -177,11 +192,13 @@ class Hub():
 #			ATTACHMENTS			# 
 # 								#
 
+""" Parent class for anything that is plugged into the Hub's ports """
 class Attachment():
 	def __init__(self, client=None, port=None):
 		self.client = client
 		self.port = port
 
+""" Parent class for anything that reads values """
 class Sensor(Attachment):
 	async def read_value(self):
 		await self.client.read_gatt_char(SENSOR_VAL_UUID, True)
@@ -190,25 +207,39 @@ class Sensor(Attachment):
 		pass
 
 class DistanceSensor(Sensor):
+	"""
+	Set the distance sensor to one of two modes:
+		DIST_DETECT_MODE - report distance from object from 1-10
+		DIST_COUNT_MODE - ???
+	"""
 	async def set_mode(self, mode):
 		data = bytearray( [0x01,0x02,self.port,0x23,mode,0x01,0x00,0x00,0x00,0x02,0x01] )
 		await self.client.write_gatt_char(INPUT_COMMAND_UUID, data, True)
 
 class TiltSensor(Sensor):
+	"""
+	Set the tilt sensor to one of three modes:
+		TILT_ANGLE_MODE - ???
+		TILT_TILT_MODE - report one of six "tilt states" (neutral, forward, backward, etc.)
+		TILT_CRASH_MODE - ???
+	"""
 	async def set_mode(self, mode):
 		data = bytearray( [0x01,0x02,self.port,0x22,mode,0x01,0x00,0x00,0x00,0x02,0x01] )
 		await self.client.write_gatt_char(INPUT_COMMAND_UUID, data, True)
 
 class Motor(Attachment):
-	async def set_speed(self, speed):
-		data = bytearray([self.port, 0x01, 0x01, self.translate_speed( speed ) ])
+	"""
+	Set the speed of the motor, from 1 to -1 (0=stopped)
+	"""
+	async def set_speed(self, speed, factor=1):
+		data = bytearray([self.port, 0x01, 0x01, self.translate_speed( speed, factor) ])
 
 		await self.client.write_gatt_char(OUTPUT_COMMAND_UUID, data, True )
 
-	def translate_speed(self, speed):
+	def translate_speed(self, speed, factor=1):
 	    if speed < 0:
-	        return int((0x54*max(speed,-1))+0xF0)
+	        return int((0x54*max(speed,-1)*factor)+0xF0)
 	    elif speed > 0:
-	        return int((0x54*min(speed,1))+0x10)
+	        return int((0x54*min(speed,1)*factor)+0x10)
 	    else:
 	        return 0x00
