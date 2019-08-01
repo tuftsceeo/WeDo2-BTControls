@@ -65,8 +65,8 @@ async def main ():
 
 
 		# Set motors' speeds
-		m1.set_speed(motor_speed)
-		m2.set_speed(motor_speed)
+		await m1.set_speed(motor_speed)
+		await m2.set_speed(motor_speed)
 
 
 		# Allow some buffer time between each loop
