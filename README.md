@@ -1,3 +1,4 @@
+
 # WeDo-BT control wrapper class
 
 This library interacts with the LEGO® WeDo 2.0 system. Unlike the native WeDo software, this library allows for multiple WeDos to connect and commicate, with the computer as an intermediary. We use [Bleak](https://github.com/hbldh/bleak), an asynchronous platform agnostic Bluetooth Low Energy (BLE) library to communcate with the WeDos.
@@ -43,7 +44,7 @@ loop.run_until_complete(main())
 - `speed`: A value between -1 and 1, inclusive
 
 `await h.end(False)`: Wait for the program to end
--`False`: True=blocking (hold program until it ends), False=nonblocking(check, but then move on; good for loops)
+- `False`: True=blocking (hold program until it ends), False=nonblocking(check, but then move on; good for loops)
 
 ## Examples
 You can find more information in `examples/`
