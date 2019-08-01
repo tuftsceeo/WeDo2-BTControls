@@ -47,9 +47,12 @@ loop.run_until_complete(main())
 - `False`: `True`=blocking (hold program until it ends), `False`=nonblocking(check, but then move on; good for loops)
 
 
+
+
+
 If you're wondering which how the ports are numbered:
 
-<img src="Ports.jpg" width="200">
+<img align="center" src="Ports.jpg" width="200">
 
 ## Examples
 You can find more information in `examples/`
