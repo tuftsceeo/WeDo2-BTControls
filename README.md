@@ -44,5 +44,6 @@ loop.run_until_complete(main())
 
 `await h.end(False)`: Wait for the program to end
 -`False`: True=blocking (hold program until it ends), False=nonblocking(check, but then move on; good for loops)
-<br>
+
+## Examples
 You can find more information in `examples/`
