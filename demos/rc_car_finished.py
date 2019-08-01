@@ -53,7 +53,7 @@ async def main ():
 	m2 = await car.attach(2, Motor())
 
 	# Tilt mode reports predefined movement states
-	await tilt.set_mode(TILT_TILT_MODE)
+	await tilt.set_mode(TILT_ANGLE_MODE)
 	# Detect mode reports distsance to nearest object, from 1-10
 	await dist.set_mode(DIST_DETECT_MODE)
 
