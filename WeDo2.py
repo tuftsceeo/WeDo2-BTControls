@@ -60,7 +60,7 @@ class HubManager():
 
 	""" Connect the number of WeDos specified at instantiation, either by discovering them or using provided MAC addresses """
 	async def connect_all (self, addresses=[]):
-		self.task = aio.create_task(quit())
+		self.task = aio.ensure_future(quit())
 
 		print('Connecting...')
 		for i in range(self.wnum):
