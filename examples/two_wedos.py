@@ -8,6 +8,8 @@ import asyncio as aio
 # Queues to store updates from the distance sensor
 dist_q = aio.Queue()
 
+motor_speed = 0
+
 """ 
 This function is called when the distance sensor updates
 	hub - the distance sensor's hub
@@ -21,38 +23,50 @@ def dist_callback (hub, port, num):
 
 """ The main loop for the program """
 async def main ():
-	global dist_q
+	global dist_q, motor_speed
 
-	# Hub managers store all the WeDos you wish to connect
-	h = HubManager(1)
+	"""
+	The WeDo setup:
+	- 1 WeDo with only a distance sensor attached on port 1 (brain, have it connect first)
+	- 1 WeDo with two motors attached (driver)
+	"""
+	h = HubManager(2)
 
 	# Search and establish connections w/ WeDos
 	await h.connect_all()
 
-	wedo = h.wedos[0]
+	brain = h.wedos[0]
+	driver = h.wedos[1]
 
-	# Register the distance sensor in port 1
-	d_sensor = await wedo.attach(1, DistanceSensor())
+	# Register the distance sensor in port 1 of the brain
+	d_sensor = await brain.attach(1, DistanceSensor())
+
+	# Register motors
+	m1 = await driver.attach(1, Motor())
+	m2 = await driver.attach(2, Motor())
 
 	# Detect mode reports distsance to nearest object, from 1-10
 	await d_sensor.set_mode(DIST_DETECT_MODE)
 
 	# When the sensor on port 1 receives an update, call dist_callback
-	await wedo.set_sensor_callback(1, dist_callback)
+	await brain.set_sensor_callback(1, dist_callback)
 
 	while True:
 		# Every loop check if the quit key has been press (q-Enter)
 		await h.end(False)
 
 		try:
-			# If there is a new distance update, get it from the queue and print it
-			# If you wanted to, you could just print it in the callback, but I wanted to show how you could interact
-			# between the main loop (async) and the callback (synchronous)
-			d = dist_q.get_nowait()
+			# distance sensor will set a motor speed; distance sensor reports 1-10, set_speed takes 0 to 1
+			motor_speed = dist_q.get_nowait()/10
 
-			print(f'Got an update: {d}!')
+			print(f'Got an update: {motor_speed}!')
 		except aio.QueueEmpty:
 			pass
+
+
+		# Set motors' speeds
+		m1.set_speed(motor_speed)
+		m2.set_speed(motor_speed)
 
 
 		# Allow some buffer time between each loop
