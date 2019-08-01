@@ -13,22 +13,19 @@ The other WeDo is the car itself and moves the motors
 '''
 
 # Queues to stores updates from the tilt and distance sensors, respectively
-tilt_q = aio.Queue()
-dist_q = aio.Queue()
+pitch_q = aio.Queue()
+roll_q = aio.Queue()
 
 # The direction and magnitude we will use to set the motors' speeds
-direction = -1
-magnitude = 0
 
 # Handle tilt sensor updates
 def tilt_callback(hub, port, num):
-	print(f"TILT: {num}")
-	tilt_q.put_nowait(num)
+	print(f"TILT {port}: {num}")
 
-# Handle distance sensor updates
-def dist_callback(hub, port, num):
-	print(f"DIST: {num}")
-	dist_q.put_nowait(num)
+	if port == 1:
+		pitch_q.put_nowait(num)
+	else:
+		roll_q.put_nowait(num)		
 
 # The main function, where all the meat of the program is
 async def main ():
@@ -45,20 +42,19 @@ async def main ():
 	car = h.wedos[1]
 
 	# Attach Tilt and Distance Sensors to the controller
-	tilt = await controller.attach(1, TiltSensor())
-	dist = await controller.attach(2, DistanceSensor())
+	pitch = await controller.attach(1, TiltSensor())
+	roll = await controller.attach(2, TiltSensor())
 
 	# Attach motors to the motor car
 	m1 = await car.attach(1, Motor())
 	m2 = await car.attach(2, Motor())
 
 	# Tilt mode reports predefined movement states
-	await tilt.set_mode(TILT_TILT_MODE)
-	# Detect mode reports distsance to nearest object, from 1-10
-	await dist.set_mode(DIST_DETECT_MODE)
+	await pitch.set_mode(TILT_ANGLE_MODE)
+	await roll.set_mode(TILT_ANGLE_MODE)
 
 	await controller.set_sensor_callback(1, tilt_callback)
-	await controller.set_sensor_callback(2, dist_callback)
+	await controller.set_sensor_callback(2, tilt_callback)
 
 
 	while True:
