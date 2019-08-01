@@ -4,7 +4,7 @@
 This library interacts with the LEGO® WeDo 2.0 system. Unlike the native WeDo software, this library allows for multiple WeDos to connect and commicate, with the computer as an intermediary. We use [Bleak](https://github.com/hbldh/bleak), an asynchronous platform agnostic Bluetooth Low Energy (BLE) library to communcate with the WeDos.
 
 ## Install
-Clone or download this repository and move `WeDo2.py` into your working directory
+Clone or download this repository and move `WeDo2.py` and `__init__.py` into your working directory
 
 ## Usage
 Programs will typically follow this structure:
@@ -31,7 +31,7 @@ loop.run_until_complete(main())
 `h = HubManager(x)`: initializes a HubManager
 - `x`: the number of WeDos you wish to use.
 
-`await h.connect_all()`: connect al ofl the WeDos
+`await h.connect_all()`: connect all of the WeDos
 `await wedo_0.attach(port_number, Attachment())`: register a peripheral on a port number
 - `port_number`: the port the peripheral is on
 - `Attachment()`: an instance of the peripheral
@@ -45,6 +45,10 @@ loop.run_until_complete(main())
 
 `await h.end(False)`: Wait for the program to end
 - `False`: `True`=blocking (hold program until it ends), `False`=nonblocking(check, but then move on; good for loops)
+
+
+If you're wondering which how the ports are numbered:
+<img src="Ports.jpg" width="200">
 
 ## Examples
 You can find more information in `examples/`

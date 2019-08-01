@@ -179,7 +179,7 @@ class Hub():
 			# print(self.callbacks)
 			try:
 				self.callbacks[s_port-1](self, s_port, num)
-			except TypeError:
+			except Exception:
 				pass
 
 		self.callbacks[port-1] = cb

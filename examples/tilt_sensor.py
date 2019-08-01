@@ -12,10 +12,11 @@ TILT_PORT_NUM = 1
 tilt_q = aio.Queue()
 
 """ 
-This function is called when the distance sensor updates
-	hub - the distance sensor's hub
-	port - the port the distance sensor is on
-	num - the value it reported
+This function is called when the tilt sensor updates
+The library calls this function, and gives it the following arguments:
+	hub - the WeDo that the tilt sensor is connected to
+	port - the port the tilt sensor is on
+	num - the value the tilt sensor got
 
 """
 def tilt_callback(hub, port, num):
