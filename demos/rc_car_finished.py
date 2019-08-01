@@ -1,4 +1,6 @@
-import sys
+import os, sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 import asyncio as aio
 from WeDo2 import *
 
@@ -35,7 +37,7 @@ async def main ():
 	h = HubManager(2)
 
 	# Connect the WeDos using their MAC addresses
-	await h.connect_all(['A0:E6:F8:1B:61:FC', '0C:61:CF:C9:B0:39'])
+	await h.connect_all()
 
 	# First WeDo has all the sensors
 	controller = h.wedos[0]
