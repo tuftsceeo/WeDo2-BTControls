@@ -1,7 +1,7 @@
 
 # WeDo-BT control wrapper class
 
-This library interacts with the LEGO® WeDo 2.0 system. Unlike the native WeDo software, this library allows for multiple WeDos to connect and commicate, with the computer as an intermediary. We use [Bleak](https://github.com/hbldh/bleak), an asynchronous platform agnostic Bluetooth Low Energy (BLE) library to communcate with the WeDos.
+This library interacts with the LEGO® WeDo 2.0 system. Unlike the native WeDo software, this library allows for multiple WeDos to connect and commicate, with the computer as an intermediary. We use [Bleak](https://github.com/hbldh/bleak), an asynchronous platform agnostic Bluetooth Low Energy (BLE) library to communcate with the WeDos. The library will support any OS supported by Bleak.
 
 ## Install
 This library uses Python 3.6.8 or above

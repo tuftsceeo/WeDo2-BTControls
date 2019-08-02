@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, math
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import asyncio as aio
@@ -63,8 +63,8 @@ async def main ():
 
 		try:
 			# If there is a new distance update, use it to change the magnitude value
-			n = dist_q.get_nowait()
-			magnitude = 1 - n/10
+			p = pitch_q.get_nowait()
+			r = roll_q.get_nowait()
 		except aio.QueueEmpty:
 			pass
 
@@ -76,23 +76,12 @@ async def main ():
 
 		print(magnitude, direction)
 
-		# Depending on the direction and magnitude, change the motor speeds.
-		# TODO: 8-way direction and document "motor factoring" and turn factoring
-		if direction == TILT_SENSOR_DIRECTION_NEUTRAL:
-			await m1.set_speed(0)
-			await m2.set_speed(0)
-		elif direction == TILT_SENSOR_DIRECTION_FORWARD:
-			await m1.set_speed(magnitude)
-			await m2.set_speed(-magnitude,.8915)
-		elif direction == TILT_SENSOR_DIRECTION_BACKWARD:
-			await m1.set_speed(-magnitude)
-			await m2.set_speed(magnitude,.8915)
-		elif direction == TILT_SENSOR_DIRECTION_RIGHT:
-			await m1.set_speed(magnitude*.5)
-			await m2.set_speed(magnitude*.5,.8915)
-		elif direction == TILT_SENSOR_DIRECTION_LEFT:
-			await m1.set_speed(-magnitude*.5)
-			await m2.set_speed(-magnitude*.5,.8915)
+        
+		normalized_pitch = (((p+45)%256)-45)/45
+		normalized_roll = (((r+45)%256)-45)/45
+
+                await m1.set_speed(normalized_pitch)
+                await m2.set_speed(normalized_pitch,.8915)
 
 		# Allow some buffer time
 		await aio.sleep(0)
