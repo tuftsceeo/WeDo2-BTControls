@@ -9,7 +9,7 @@ OUTPUT_COMMAND_UUID = '00001565-1212-efde-1523-785feabcd123'
 PORT_NOTIF_UUID = '00001524-1212-efde-1523-785feabcd123'
 
 LED_ABSOLUTE_MODE = 0
-LED_DISCREET_MODE = 1
+LED_DISCRETE_MODE = 1
 
 # LED index colors
 LED_INDEX_PINK = 0x01
@@ -132,11 +132,11 @@ class Hub():
 	""" 
 	Set the LED to one of two modes:
 		LED_ABSOLUTE_MODE - Change color using LEGO's presets
-		LED_DISCREET_MODE - Change color using RGB value
+		LED_DISCRETE_MODE - Change color using RGB value
 
 	 """ 
 	async def set_led_mode(self, mode):
-		await client.write_gatt_char(INPUT_COMMAND_UUID, 
+		await self.client.write_gatt_char(INPUT_COMMAND_UUID, 
 			bytearray([0x01,0x02,0x06,0x17,mode,0x01,0x00,0x00,0x00,0x02,0x01]), True)
 
 	async def set_led_color(self, color):
