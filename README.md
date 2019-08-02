@@ -4,7 +4,11 @@
 This library interacts with the LEGO® WeDo 2.0 system. Unlike the native WeDo software, this library allows for multiple WeDos to connect and commicate, with the computer as an intermediary. We use [Bleak](https://github.com/hbldh/bleak), an asynchronous platform agnostic Bluetooth Low Energy (BLE) library to communcate with the WeDos.
 
 ## Install
-Clone or download this repository and move `WeDo2.py` and `__init__.py` into your working directory
+This library uses Python 3.6.8 or above
+
+Install Bleak by typing the following command into your terminal: `pip install bleak` 
+
+Then, clone or download this repository and move `WeDo2.py` and `__init__.py` into your working directory
 
 ## Usage
 Programs will typically follow this structure:
